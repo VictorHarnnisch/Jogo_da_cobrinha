@@ -18,7 +18,10 @@ VERDE = (0, 255, 0)
 
 # Definir as dimensões da cobrinha
 TAMANHO_COBRA = 20
-VELOCIDADE = 10
+
+# Definir os níveis de dificuldade
+NIVEIS_DIFICULDADE = [5, 10, 15, 20]
+nivel_atual = 0
 
 # Posição inicial da cobrinha
 cobra_x = LARGURA // 2
@@ -56,6 +59,10 @@ while rodando:
             elif evento.key == pygame.K_DOWN:
                 direcao_x = 0
                 direcao_y = TAMANHO_COBRA
+            elif evento.key == pygame.K_SPACE:
+                # Alterar o nível de dificuldade
+                nivel_atual = (nivel_atual + 1) % len(NIVEIS_DIFICULDADE)
+                VELOCIDADE = NIVEIS_DIFICULDADE[nivel_atual]
 
     # Atualizar a posição da cabeça da cobrinha
     cobra_x += direcao_x
@@ -89,16 +96,18 @@ while rodando:
     # Desenhar a comida
     pygame.draw.rect(tela, VERMELHO, (comida_x, comida_y, TAMANHO_COBRA, TAMANHO_COBRA))
 
-    # Exibir a pontuação
+    # Exibir a pontuação e o nível de dificuldade
     font = pygame.font.Font(None, 36)
     texto_pontuacao = font.render(f"Pontuação: {pontuacao}", True, PRETO)
+    texto_dificuldade = font.render(f"Nível de Dificuldade: {NIVEIS_DIFICULDADE[nivel_atual]}", True, PRETO)
     tela.blit(texto_pontuacao, (10, 10))
+    tela.blit(texto_dificuldade, (10, 50))
 
     # Atualizar a tela
     pygame.display.flip()
 
     # Controlar a velocidade do jogo
-    pygame.time.Clock().tick(VELOCIDADE)
+    pygame.time.Clock().tick(NIVEIS_DIFICULDADE[nivel_atual])
 
 # Encerrar o Pygame
 pygame.quit()
