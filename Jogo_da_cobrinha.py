@@ -1,27 +1,27 @@
 import pygame
 import random
 
-# Inicializar o Pygame
+# Inicialização do Pygame
 pygame.init()
 
-# Definir as dimensões da janela
+# Configurações da tela
 LARGURA = 800
 ALTURA = 600
 tela = pygame.display.set_mode((LARGURA, ALTURA))
 pygame.display.set_caption("Jogo da Cobrinha")
 
-# Definir as cores
-BRANCO = (255, 255, 255)
+# Cores
 PRETO = (0, 0, 0)
 VERMELHO = (255, 0, 0)
 VERDE = (0, 255, 0)
+BRANCO = (255, 255, 255)
 
-# Definir as dimensões da cobrinha
+# Configurações da cobrinha
 TAMANHO_COBRA = 20
-
-# Definir os níveis de dificuldade
-NIVEIS_DIFICULDADE = [5, 10, 15, 20]
-nivel_atual = 0
+VELOCIDADE_INICIAL = 8
+VELOCIDADE_MAXIMA = 20
+VELOCIDADE = VELOCIDADE_INICIAL
+INCREMENTO_VELOCIDADE = 2
 
 # Posição inicial da cobrinha
 cobra_x = LARGURA // 2
@@ -29,8 +29,8 @@ cobra_y = ALTURA // 2
 cobra = [(cobra_x, cobra_y)]
 
 # Posição inicial da comida
-comida_x = random.randint(0, LARGURA - TAMANHO_COBRA)
-comida_y = random.randint(0, ALTURA - TAMANHO_COBRA)
+comida_x = random.randrange(0, LARGURA - TAMANHO_COBRA + 1, TAMANHO_COBRA)
+comida_y = random.randrange(0, ALTURA - TAMANHO_COBRA + 1, TAMANHO_COBRA)
 
 # Direção inicial da cobrinha
 direcao_x = TAMANHO_COBRA
@@ -39,75 +39,69 @@ direcao_y = 0
 # Pontuação
 pontuacao = 0
 
+# Fonte para texto
+fonte = pygame.font.Font(None, 36)
+
 # Loop principal do jogo
 rodando = True
 while rodando:
-    # Verificar eventos
+    # Eventos
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
             rodando = False
         elif evento.type == pygame.KEYDOWN:
-            if evento.key == pygame.K_LEFT:
+            if evento.key == pygame.K_LEFT and direcao_x == 0:
                 direcao_x = -TAMANHO_COBRA
                 direcao_y = 0
-            elif evento.key == pygame.K_RIGHT:
+            elif evento.key == pygame.K_RIGHT and direcao_x == 0:
                 direcao_x = TAMANHO_COBRA
                 direcao_y = 0
-            elif evento.key == pygame.K_UP:
+            elif evento.key == pygame.K_UP and direcao_y == 0:
                 direcao_x = 0
                 direcao_y = -TAMANHO_COBRA
-            elif evento.key == pygame.K_DOWN:
+            elif evento.key == pygame.K_DOWN and direcao_y == 0:
                 direcao_x = 0
                 direcao_y = TAMANHO_COBRA
-            elif evento.key == pygame.K_SPACE:
-                # Alterar o nível de dificuldade
-                nivel_atual = (nivel_atual + 1) % len(NIVEIS_DIFICULDADE)
-                VELOCIDADE = NIVEIS_DIFICULDADE[nivel_atual]
+            elif evento.key == pygame.K_SPACE:  # Aumenta a velocidade com a tecla espaço
+                VELOCIDADE = min(VELOCIDADE_MAXIMA, VELOCIDADE + INCREMENTO_VELOCIDADE)
+            elif evento.key == pygame.K_LALT or evento.key == pygame.K_RALT:  # Diminui a velocidade com a tecla ALT
+                VELOCIDADE = max(2, VELOCIDADE - INCREMENTO_VELOCIDADE)
 
-    # Atualizar a posição da cabeça da cobrinha
+    # Atualiza a posição da cobrinha
     cobra_x += direcao_x
     cobra_y += direcao_y
     nova_cabeca = (cobra_x, cobra_y)
     cobra.append(nova_cabeca)
 
-    # Verificar se a cobrinha comeu a comida
-    if cobra_x == comida_x and cobra_y == comida_y:
-        comida_x = random.randint(0, LARGURA - TAMANHO_COBRA)
-        comida_y = random.randint(0, ALTURA - TAMANHO_COBRA)
+    # Verifica se a cobrinha comeu a comida
+    if cobra[-1][0] == comida_x and cobra[-1][1] == comida_y:
+        comida_x = random.randrange(0, LARGURA - TAMANHO_COBRA + 1, TAMANHO_COBRA)
+        comida_y = random.randrange(0, ALTURA - TAMANHO_COBRA + 1, TAMANHO_COBRA)
         pontuacao += 1
     else:
         cobra.pop(0)
 
-    # Verificar se a cobrinha bateu nas bordas
-    if cobra_x < 0 or cobra_x >= LARGURA or cobra_y < 0 or cobra_y >= ALTURA:
+    # Verifica colisões com as bordas e com ela mesma
+    if cobra_x < 0 or cobra_x >= LARGURA or cobra_y < 0 or cobra_y >= ALTURA or nova_cabeca in cobra[:-1]:
         rodando = False
 
-    # Verificar se a cobrinha bateu em si mesma
-    if nova_cabeca in cobra[:-1]:
-        rodando = False
-
-    # Limpar a tela
-    tela.fill(BRANCO)
-
-    # Desenhar a cobrinha
+    # Desenha na tela
+    tela.fill(PRETO)
     for segmento in cobra:
-        pygame.draw.rect(tela, PRETO, (segmento[0], segmento[1], TAMANHO_COBRA, TAMANHO_COBRA))
-
-    # Desenhar a comida
+        pygame.draw.rect(tela, VERDE, (segmento[0], segmento[1], TAMANHO_COBRA, TAMANHO_COBRA))
     pygame.draw.rect(tela, VERMELHO, (comida_x, comida_y, TAMANHO_COBRA, TAMANHO_COBRA))
 
-    # Exibir a pontuação e o nível de dificuldade
-    font = pygame.font.Font(None, 36)
-    texto_pontuacao = font.render(f"Pontuação: {pontuacao}", True, PRETO)
-    texto_dificuldade = font.render(f"Nível de Dificuldade: {NIVEIS_DIFICULDADE[nivel_atual]}", True, PRETO)
+    # Exibe a pontuação e a velocidade
+    texto_pontuacao = fonte.render(f"Pontuação: {pontuacao}", True, BRANCO)
+    texto_velocidade = fonte.render(f"Velocidade: {VELOCIDADE}", True, BRANCO)
     tela.blit(texto_pontuacao, (10, 10))
-    tela.blit(texto_dificuldade, (10, 50))
+    tela.blit(texto_velocidade, (10, 40))
 
-    # Atualizar a tela
+    # Atualiza a tela
     pygame.display.flip()
 
-    # Controlar a velocidade do jogo
-    pygame.time.Clock().tick(NIVEIS_DIFICULDADE[nivel_atual])
+    # Controla a velocidade do jogo
+    pygame.time.Clock().tick(VELOCIDADE)
 
-# Encerrar o Pygame
+# Encerra o Pygame
 pygame.quit()
